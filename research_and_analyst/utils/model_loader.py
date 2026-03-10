@@ -113,21 +113,73 @@ class ModelLoader:
         """
         try:
             llm_block = self.config["llm"]
-            provider_key = os.getenv("LLM_PROVIDER", "openai")
+            provider_key = os.getenv("LLM_PROVIDER")
+            if provider_key:
+                provider_key = provider_key.strip().lower()
+
+            key_by_provider = {
+                "openai": "OPENAI_API_KEY",
+                "google": "GOOGLE_API_KEY",
+                "groq": "GROQ_API_KEY",
+            }
+
+            # If provider isn't explicitly chosen, prefer whatever has a key present.
+            if not provider_key:
+                preferred = []
+                if self.api_key_mgr.get("GROQ_API_KEY"):
+                    preferred.append("groq")
+                if self.api_key_mgr.get("GOOGLE_API_KEY"):
+                    preferred.append("google")
+                if self.api_key_mgr.get("OPENAI_API_KEY"):
+                    preferred.append("openai")
+                provider_key = next((k for k in preferred if k in llm_block), "openai")
+
+            # If a provider was requested but its API key is missing, fall back to an
+            # available provider (instead of failing with an OpenAI/Google SDK error).
+            if provider_key in llm_block:
+                requested_provider = (llm_block[provider_key].get("provider") or provider_key).strip().lower()
+                required_key = key_by_provider.get(requested_provider)
+                if required_key and not self.api_key_mgr.get(required_key):
+                    log.warning(
+                        "Requested LLM provider is missing its API key; falling back to available provider",
+                        requested_provider=requested_provider,
+                        missing_key=required_key,
+                    )
+                    provider_key = next(
+                        (
+                            k
+                            for k in ["groq", "google", "openai"]
+                            if k in llm_block and self.api_key_mgr.get(key_by_provider.get(k, ""))
+                        ),
+                        provider_key,
+                    )
 
             if provider_key not in llm_block:
                 log.error("LLM provider not found in configuration", provider=provider_key)
                 raise ValueError(f"LLM provider '{provider_key}' not found in configuration")
 
             llm_config = llm_block[provider_key]
-            provider = llm_config.get("provider")
+            provider = (llm_config.get("provider") or provider_key).strip().lower()
             model_name = llm_config.get("model_name")
             temperature = llm_config.get("temperature", 0.2)
             max_tokens = llm_config.get("max_output_tokens", 2048)
 
+            # Allow model override without editing YAML.
+            # Examples (PowerShell):
+            #   $env:LLM_MODEL_NAME="..."
+            #   $env:GROQ_MODEL_NAME="..."
+            env_model_name = os.getenv("LLM_MODEL_NAME")
+            env_model_name = os.getenv(f"{provider_key.upper()}_MODEL_NAME") or env_model_name
+            env_model_name = os.getenv(f"{provider.upper()}_MODEL_NAME") or env_model_name
+            if env_model_name:
+                model_name = env_model_name
+                log.info("Overriding LLM model from environment", provider=provider, model=model_name)
+
             log.info("Loading LLM", provider=provider, model=model_name)
 
             if provider == "google":
+                if not self.api_key_mgr.get("GOOGLE_API_KEY"):
+                    raise ValueError("GOOGLE_API_KEY is missing in environment variables")
                 llm = ChatGoogleGenerativeAI(
                     model=model_name,
                     google_api_key=self.api_key_mgr.get("GOOGLE_API_KEY"),
@@ -136,6 +188,8 @@ class ModelLoader:
                 )
 
             elif provider == "groq":
+                if not self.api_key_mgr.get("GROQ_API_KEY"):
+                    raise ValueError("GROQ_API_KEY is missing in environment variables")
                 llm = ChatGroq(
                     model=model_name,
                     api_key=self.api_key_mgr.get("GROQ_API_KEY"),
@@ -143,6 +197,8 @@ class ModelLoader:
                 )
 
             elif provider == "openai":
+                if not self.api_key_mgr.get("OPENAI_API_KEY"):
+                    raise ValueError("OPENAI_API_KEY is missing in environment variables")
                 llm = ChatOpenAI(
                     model=model_name,
                     api_key=self.api_key_mgr.get("OPENAI_API_KEY"),
@@ -182,8 +238,14 @@ if __name__ == "__main__":
 
         log.info("ModelLoader test completed successfully")
 
-    except ResearchAnalystException as e:
-        log.error("Critical failure in ModelLoader test", error=str(e))
+    except Exception as e:
+        wrapped = e if isinstance(e, ResearchAnalystException) else ResearchAnalystException("ModelLoader test failed", e)
+        log.error("Critical failure in ModelLoader test", error=str(wrapped))
+        if "model_decommissioned" in str(e):
+            print(
+                "Groq returned model_decommissioned. Update `llm.groq.model_name` in "
+                "`research_and_analyst/config/configuration.yaml` or set `GROQ_MODEL_NAME`/`LLM_MODEL_NAME`."
+            )
         
         
 # Write a clean, enterprise-grade Python module for dynamic model loading in a structured AI backend system. The system must follow clean architecture principles and separate API key management, configuration loading, and model initialization logic. Use environment variables and YAML configuration to determine which LLM provider to load. Support OpenAI, Google Gemini, and Groq chat models. Include structured logging at every stage, avoid exposing secrets, ensure async loop safety for gRPC-based embedding APIs, and wrap all failures using a custom domain exception class. Provide complete documentation, comments, error handling, and a standalone test block for local validation.

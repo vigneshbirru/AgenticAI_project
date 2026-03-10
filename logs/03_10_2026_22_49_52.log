@@ -1,0 +1,10 @@
+{"timestamp": "2026-03-10T17:19:57.814098Z", "level": "info", "event": "Initializing ApiKeyManager"}
+{"timestamp": "2026-03-10T17:19:57.816115Z", "level": "warning", "event": "OPENAI_API_KEY is missing in environment variables"}
+{"timestamp": "2026-03-10T17:19:57.816115Z", "level": "warning", "event": "GOOGLE_API_KEY is missing in environment variables"}
+{"timestamp": "2026-03-10T17:19:57.816115Z", "level": "info", "event": "GROQ_API_KEY loaded successfully from environment"}
+{"path": "C:\\Users\\vighnesh\\project\\AgenticAI_project\\research_and_analyst\\config\\configuration.yaml", "keys": ["llm"], "timestamp": "2026-03-10T17:19:57.838351Z", "level": "info", "event": "Configuration loaded successfully"}
+{"config_keys": ["llm"], "timestamp": "2026-03-10T17:19:57.839343Z", "level": "info", "event": "YAML configuration loaded successfully"}
+{"provider": "groq", "model": "llama-3.3-70b-versatile", "timestamp": "2026-03-10T17:19:57.839343Z", "level": "info", "event": "Loading LLM"}
+{"provider": "groq", "model": "llama-3.3-70b-versatile", "timestamp": "2026-03-10T17:19:58.278778Z", "level": "info", "event": "LLM loaded successfully"}
+HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+{"timestamp": "2026-03-10T17:19:58.764522Z", "level": "info", "event": "ModelLoader test completed successfully"}
