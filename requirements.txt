@@ -16,3 +16,4 @@ ddgs
 structlog
 langchain_groq
 google-genai
+structlog
