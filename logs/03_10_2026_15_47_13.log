@@ -1,0 +1,4 @@
+{"path": "C:\\Users\\vighnesh\\project\\AgenticAI_project\\research_and_analyst\\config\\configuration.yaml", "keys": ["llm"], "timestamp": "2026-03-10T10:17:13.301885Z", "level": "info", "event": "Configuration loaded successfully"}
+{"timestamp": "2026-03-10T10:17:13.303126Z", "level": "info", "event": "ConfigLoader test run completed successfully"}
+{"path": "C:\\Users\\vighnesh\\project\\AgenticAI_project\\research_and_analyst\\config\\configuration.yaml", "keys": ["llm"], "timestamp": "2026-03-10T10:17:13.304146Z", "level": "info", "event": "Configuration loaded successfully"}
+{"timestamp": "2026-03-10T10:17:13.305658Z", "level": "info", "event": "ConfigLoader (config_loder shim) test run completed successfully"}
